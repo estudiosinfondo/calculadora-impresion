@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cotiza tu impresión · Estudio sin fondo</title>
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;background:#16181c}body{min-height:100vh}</style>
+</head>
+<body>
+<div id="calc-impresion">
+<style>
+  #calc-impresion {
+    --tinta:#16181c;--tinta-2:#24272e;--papel:#ece7dc;--ambar:#e8a33d;
+    --verde:#7fa66a;--rojo:#c96a5a;--linea:rgba(236,231,220,.14);
+    --sans:"Inter","Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    all:initial;display:block;font-family:var(--sans);background:var(--tinta);
+    color:var(--papel);padding:clamp(20px,4vw,44px);border-radius:2px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  #calc-impresion *,#calc-impresion *::before,#calc-impresion *::after{box-sizing:border-box}
+  #calc-impresion .ci-head{margin-bottom:30px;max-width:62ch}
+  #calc-impresion .ci-title{font-size:clamp(23px,3.4vw,33px);font-weight:600;letter-spacing:-.022em;margin:0 0 8px}
+  #calc-impresion .ci-sub{margin:0;font-size:14.5px;color:rgba(236,231,220,.62)}
+  #calc-impresion .ci-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:34px;align-items:start}
+  @media(max-width:780px){#calc-impresion .ci-grid{grid-template-columns:1fr;gap:30px}}
+  #calc-impresion .ci-form{border:1px solid var(--linea);padding:22px;background:var(--tinta-2)}
+  #calc-impresion .ci-legend{font-size:12.5px;color:rgba(236,231,220,.55);margin:0 0 16px}
+  #calc-impresion .ci-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  #calc-impresion .ci-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+  #calc-impresion .ci-field label{font-size:13px;color:rgba(236,231,220,.72)}
+  #calc-impresion input[type="number"],#calc-impresion select{
+    font-family:inherit;font-size:15.5px;color:var(--papel);background:#101216;
+    border:1px solid rgba(236,231,220,.2);padding:9px 11px;border-radius:2px;width:100%;
+    min-width:0;font-variant-numeric:tabular-nums;
+  }
+  #calc-impresion input[type="number"]:focus,#calc-impresion select:focus,
+  #calc-impresion button:focus-visible{outline:2px solid var(--ambar);outline-offset:1px}
+  #calc-impresion select{appearance:none;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,rgba(236,231,220,.6) 50%),
+    linear-gradient(135deg,rgba(236,231,220,.6) 50%,transparent 50%);
+    background-position:calc(100% - 17px) 52%,calc(100% - 12px) 52%;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px}
+  #calc-impresion select option{background:#101216;color:var(--papel)}
+
+  #calc-impresion .ci-opts{margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+  #calc-impresion .ci-opt{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px}
+  #calc-impresion .ci-opt input[type="checkbox"]{
+    appearance:none;-webkit-appearance:none;width:18px;height:18px;min-width:18px;
+    border:1.5px solid rgba(236,231,220,.35);border-radius:2px;background:transparent;
+    cursor:pointer;margin-top:2px;position:relative;transition:background .12s,border-color .12s;
+  }
+  #calc-impresion .ci-opt input[type="checkbox"]:checked{background:var(--ambar);border-color:var(--ambar)}
+  #calc-impresion .ci-opt input[type="checkbox"]:checked::after{
+    content:'✓';position:absolute;top:-1px;left:2px;font-size:13px;color:#16181c;font-weight:700;
+  }
+  #calc-impresion .ci-opt input:disabled{opacity:.35;cursor:not-allowed}
+  #calc-impresion .ci-opt-text{display:flex;flex-direction:column;gap:1px}
+  #calc-impresion .ci-opt-label{color:var(--papel)}
+  #calc-impresion .ci-opt-note{font-size:12px;color:rgba(236,231,220,.45)}
+  #calc-impresion .ci-opt.ci-disabled .ci-opt-label{color:rgba(236,231,220,.35)}
+
+  #calc-impresion .ci-live{
+    display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+    padding:15px 0;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);margin:4px 0 16px;
+  }
+  #calc-impresion .ci-live-num{font-size:30px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  #calc-impresion .ci-live-unit{font-size:12.5px;color:rgba(236,231,220,.6);text-align:right}
+  #calc-impresion .ci-warn{display:none;font-size:13px;color:var(--rojo);margin-bottom:14px;border-left:2px solid var(--rojo);padding-left:10px}
+  #calc-impresion .ci-warn.ci-on{display:block}
+  #calc-impresion .ci-add{
+    font-family:inherit;font-size:15px;font-weight:550;cursor:pointer;
+    background:var(--ambar);color:#16181c;border:0;border-radius:2px;
+    padding:11px 18px;width:100%;transition:background .15s ease;
+  }
+  #calc-impresion .ci-add:hover{background:#f0b256}
+  #calc-impresion .ci-add:disabled{background:rgba(236,231,220,.16);color:rgba(236,231,220,.4);cursor:not-allowed}
+
+  #calc-impresion .ci-order-head{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--linea);margin-bottom:4px}
+  #calc-impresion .ci-order-title{font-size:16px;font-weight:600}
+  #calc-impresion .ci-count{font-size:13px;color:rgba(236,231,220,.55)}
+  #calc-impresion .ci-empty{font-size:14px;color:rgba(236,231,220,.45);padding:26px 0}
+  #calc-impresion .ci-line{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--linea)}
+  #calc-impresion .ci-line-main{min-width:0}
+  #calc-impresion .ci-line-name{font-size:15px}
+  #calc-impresion .ci-line-meta{font-size:12.5px;color:rgba(236,231,220,.55);margin-top:3px}
+  #calc-impresion .ci-line-price{font-size:15.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  #calc-impresion .ci-del{font-family:inherit;font-size:17px;line-height:1;cursor:pointer;background:none;border:0;color:rgba(236,231,220,.4);padding:2px 4px}
+  #calc-impresion .ci-del:hover{color:var(--rojo)}
+  #calc-impresion .ci-total{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-top:16px;padding-top:15px;border-top:2px solid var(--papel)}
+  #calc-impresion .ci-total-label{font-size:16px;font-weight:600}
+  #calc-impresion .ci-total-num{font-size:34px;font-weight:650;letter-spacing:-.024em;font-variant-numeric:tabular-nums}
+  #calc-impresion .ci-foot{font-size:12px;color:rgba(236,231,220,.42);margin-top:18px;max-width:56ch}
+  #calc-impresion .ci-foot-precio{margin:-6px 0 16px}
+  #calc-impresion .ci-entrega{margin-top:18px;padding:14px 16px;border:1px solid var(--linea);background:var(--tinta-2);font-size:14px}
+  #calc-impresion .ci-entrega-title{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:rgba(236,231,220,.55);margin:0 0 8px}
+  #calc-impresion .ci-entrega p{margin:0 0 6px}
+  #calc-impresion .ci-entrega strong{font-weight:600;color:var(--papel)}
+  #calc-impresion .ci-entrega .ci-entrega-nota{font-size:12px;color:rgba(236,231,220,.45);margin:8px 0 0}
+  #calc-impresion .ci-pedir{margin-top:16px}
+  #calc-impresion .ci-oferta-tag{color:var(--verde)}
+  #calc-impresion .ci-modal{position:fixed;inset:0;background:rgba(10,11,13,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+  #calc-impresion .ci-modal.ci-on{display:flex}
+  #calc-impresion .ci-modal-box{background:var(--tinta-2);border:1px solid rgba(236,231,220,.2);max-width:460px;width:100%;max-height:90vh;overflow:auto;padding:24px}
+  #calc-impresion .ci-modal-title{font-size:21px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+  #calc-impresion .ci-modal-text{font-size:14.5px;color:rgba(236,231,220,.78);margin:0 0 14px}
+  #calc-impresion .ci-modal-badge{display:inline-block;background:var(--ambar);color:#16181c;font-weight:600;font-size:13px;padding:3px 8px;margin-bottom:14px}
+  #calc-impresion .ci-modal-items{display:flex;flex-direction:column;gap:10px;margin:0 0 16px}
+  #calc-impresion .ci-modal-item .ci-opt-note s{color:rgba(236,231,220,.4)}
+  #calc-impresion .ci-modal-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--linea);padding-top:12px;margin-bottom:16px;font-size:14px}
+  #calc-impresion .ci-modal-total strong{font-size:22px;font-variant-numeric:tabular-nums}
+  #calc-impresion .ci-modal-actions{display:flex;flex-direction:column;gap:8px}
+  #calc-impresion .ci-sec{font-family:inherit;font-size:14px;cursor:pointer;background:none;border:1px solid rgba(236,231,220,.25);color:var(--papel);padding:10px 18px;border-radius:2px;width:100%}
+  #calc-impresion .ci-sec:hover{border-color:rgba(236,231,220,.5)}
+  #calc-impresion [hidden]{display:none!important}
+  #calc-impresion .ci-paso{max-width:640px}
+  #calc-impresion .ci-volver{font-family:inherit;font-size:13.5px;cursor:pointer;background:none;border:0;color:rgba(236,231,220,.6);padding:0;margin:0 0 18px}
+  #calc-impresion .ci-volver:hover{color:var(--papel)}
+  #calc-impresion .ci-bloque{border:1px solid var(--linea);background:var(--tinta-2);padding:20px 22px;margin-bottom:18px}
+  #calc-impresion .ci-bloque-title{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:rgba(236,231,220,.55);margin:0 0 12px}
+  #calc-impresion .ci-res-line{display:flex;justify-content:space-between;gap:14px;font-size:14.5px;padding:8px 0;border-bottom:1px solid var(--linea)}
+  #calc-impresion .ci-res-line > span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+  #calc-impresion .ci-res-meta{display:block;font-size:12.5px;color:rgba(236,231,220,.55)}
+  #calc-impresion .ci-res-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:12px;font-weight:600}
+  #calc-impresion .ci-res-total strong{font-size:26px;font-variant-numeric:tabular-nums}
+  #calc-impresion .ci-paso .ci-field{margin-bottom:14px}
+  #calc-impresion .ci-paso .ci-field small{font-size:12px;color:rgba(236,231,220,.45)}
+  #calc-impresion input[type="text"],#calc-impresion input[type="email"],#calc-impresion input[type="tel"],#calc-impresion textarea{
+    font-family:inherit;font-size:15.5px;color:var(--papel);background:#101216;
+    border:1px solid rgba(236,231,220,.2);padding:9px 11px;border-radius:2px;width:100%;min-width:0}
+  #calc-impresion textarea{min-height:76px;resize:vertical}
+  #calc-impresion .ci-tel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:8px}
+  #calc-impresion input[type="text"]:focus,#calc-impresion input[type="email"]:focus,#calc-impresion input[type="tel"]:focus,#calc-impresion textarea:focus{outline:2px solid var(--ambar);outline-offset:1px}
+  #calc-impresion .ci-opt input[type="radio"]{appearance:none;-webkit-appearance:none;width:18px;height:18px;min-width:18px;border:1.5px solid rgba(236,231,220,.35);border-radius:50%;margin-top:2px;cursor:pointer}
+  #calc-impresion .ci-opt input[type="radio"]:checked{border:5px solid var(--ambar)}
+  #calc-impresion .ci-opt input:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+  #calc-impresion .ci-opt a{color:var(--papel)}
+  #calc-impresion .ci-trampa{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  #calc-impresion .ci-error{display:none;font-size:13.5px;color:var(--rojo);margin:0 0 14px;border-left:2px solid var(--rojo);padding-left:10px}
+  #calc-impresion .ci-error.ci-on{display:block}
+  #calc-impresion .ci-paso-num{font-size:13px;font-weight:600;color:var(--ambar);margin:0 0 4px}
+  #calc-impresion .ci-paso-txt{font-size:14.5px;color:rgba(236,231,220,.8);margin:0 0 12px}
+  #calc-impresion .ci-paso-txt strong{color:var(--papel)}
+  #calc-impresion .ci-llave{font-size:19px;font-weight:600;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+  #calc-impresion a.ci-add,#calc-impresion a.ci-sec{display:block;text-align:center;text-decoration:none}
+  #calc-impresion .ci-copiar{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;margin-left:6px;vertical-align:middle;cursor:pointer;background:none;border:0;border-radius:2px;color:rgba(236,231,220,.6)}
+  #calc-impresion .ci-copiar:hover{color:var(--papel);background:rgba(236,231,220,.08)}
+  #calc-impresion .ci-copiar svg{width:17px;height:17px}
+  #calc-impresion .ci-copiar .ci-ico-ok{display:none}
+  #calc-impresion .ci-copiar.ci-ok{color:var(--verde)}
+  #calc-impresion .ci-copiar.ci-ok .ci-ico-copiar{display:none}
+  #calc-impresion .ci-copiar.ci-ok .ci-ico-ok{display:block}
+  #calc-impresion .ci-aviso{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;border:1px solid var(--ambar);padding:12px 16px;margin-bottom:24px;font-size:14.5px}
+  #calc-impresion .ci-aviso[hidden]{display:none}
+  #calc-impresion .ci-aviso-btn,#calc-impresion .ci-sug button{font-family:inherit;font-size:inherit;cursor:pointer;background:none;border:0;padding:0;color:var(--ambar);text-decoration:underline;text-underline-offset:3px}
+  #calc-impresion .ci-sug{font-size:13.5px;color:var(--papel);margin:6px 0 4px}
+  #calc-impresion .ci-correo-ver{font-size:17px;font-weight:600;color:var(--papel);margin:0 0 6px;overflow-wrap:anywhere}
+  #calc-impresion .ci-res-desc > span:last-child{color:var(--verde)}
+  #calc-impresion .ci-cupon{margin-top:14px;padding-top:12px;border-top:1px solid var(--linea)}
+  #calc-impresion .ci-cupon-abrir{font-family:inherit;font-size:13.5px;cursor:pointer;background:none;border:0;padding:0;color:var(--ambar);text-decoration:underline;text-underline-offset:3px}
+  #calc-impresion .ci-cupon .ci-field{margin:10px 0 0}
+  #calc-impresion .ci-cupon-fila{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  #calc-impresion #ci-cupon-codigo{text-transform:uppercase;letter-spacing:.06em}
+  #calc-impresion .ci-cupon-btn{font-family:inherit;font-size:14px;cursor:pointer;background:none;border:1px solid rgba(236,231,220,.35);color:var(--papel);padding:9px 16px;border-radius:2px}
+  #calc-impresion .ci-cupon-btn:hover{border-color:rgba(236,231,220,.6)}
+  #calc-impresion .ci-cupon-btn[disabled]{opacity:.5;cursor:default}
+  #calc-impresion .ci-cupon-estado{font-size:13.5px;margin:10px 0 6px;color:rgba(236,231,220,.8)}
+  #calc-impresion .ci-cupon-estado.ci-mal{color:var(--rojo)}
+  #calc-impresion .ci-cupon-estado strong{color:var(--verde)}
+  @media(prefers-reduced-motion:reduce){#calc-impresion *{transition:none!important}}
+</style>
+
+<div class="ci-aviso" id="ci-aviso" hidden>
+  <span>Tu pedido <strong id="ci-aviso-num"></strong> está registrado.</span>
+  <button type="button" class="ci-aviso-btn" id="ci-aviso-ver">Ver cómo pagar y enviar el comprobante</button>
+</div>
+
+<div class="ci-head">
+  <h2 class="ci-title">Cotiza tu impresión</h2>
+  <p class="ci-sub">Ingresa el tamaño y la cantidad. Puedes agregar varias impresiones a la misma cotización.</p>
+</div>
+
+<div class="ci-grid">
+  <div class="ci-form">
+    <p class="ci-legend">Máximo imprimible: 60 cm de ancho × 200 cm de largo</p>
+
+    <div class="ci-row">
+      <div class="ci-field">
+        <label for="ci-w">Ancho (cm)</label>
+        <input type="number" id="ci-w" value="50" min="1" max="200" step="0.5">
+      </div>
+      <div class="ci-field">
+        <label for="ci-h">Alto (cm)</label>
+        <input type="number" id="ci-h" value="70" min="1" max="200" step="0.5">
+      </div>
+    </div>
+
+    <div class="ci-row">
+      <div class="ci-field">
+        <label for="ci-p">Papel</label>
+        <select id="ci-p">
+          <option value="bond" selected>Mate estucado · 170 g</option>
+          <option value="fuji">Fujifilm Lustre · 190 g</option>
+        </select>
+      </div>
+      <div class="ci-field">
+        <label for="ci-q">Cantidad</label>
+        <input type="number" id="ci-q" value="1" min="1" max="999" step="1">
+      </div>
+    </div>
+
+    <div class="ci-opts">
+      <label class="ci-opt" id="ci-opt-lam">
+        <input type="checkbox" id="ci-lam">
+        <span class="ci-opt-text">
+          <span class="ci-opt-label">Laminado (vinilo mate)</span>
+          <span class="ci-opt-note">Protege de roces, huellas y humedad</span>
+        </span>
+      </label>
+      <label class="ci-opt" id="ci-opt-mon">
+        <input type="checkbox" id="ci-mon">
+        <span class="ci-opt-text">
+          <span class="ci-opt-label">Montaje sobre madera (MDF 9 mm)</span>
+          <span class="ci-opt-note" id="ci-mon-note">Listo para colgar · desde 20 × 30 cm</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="ci-live">
+      <span class="ci-live-num" id="ci-live">$30.000</span>
+      <span class="ci-live-unit" id="ci-liveunit">1 copia</span>
+    </div>
+    <p class="ci-foot ci-foot-precio">Precios en pesos colombianos. Entre más copias del mismo tamaño, menor el precio por unidad. El laminado y el montaje se cotizan sobre la impresión.</p>
+
+    <p class="ci-warn" id="ci-warn">Ese tamaño no cabe: el máximo es 60 cm de ancho por 200 cm de largo.</p>
+
+    <button class="ci-add" id="ci-add">Agregar cotización</button>
+  </div>
+
+  <div class="ci-order">
+    <div class="ci-order-head">
+      <span class="ci-order-title">Tu cotización</span>
+      <span class="ci-count" id="ci-count"></span>
+    </div>
+    <div id="ci-lines"><p class="ci-empty">Todavía no has agregado nada.</p></div>
+    <div class="ci-total">
+      <span class="ci-total-label">Total cotizado</span>
+      <span class="ci-total-num" id="ci-total">$0</span>
+    </div>
+    <div class="ci-entrega" id="ci-entrega" aria-live="polite"></div>
+    <button class="ci-add ci-pedir" id="ci-pedir" disabled>Hacer mi pedido</button>
+  </div>
+</div>
+
+<div class="ci-paso" id="ci-datos-vista" hidden>
+  <button class="ci-volver" id="ci-volver" type="button">← Volver a la cotización</button>
+  <h2 class="ci-title">Tu pedido</h2>
+  <p class="ci-sub" style="margin-bottom:22px">Revisa tu pedido y déjanos tus datos. En el siguiente paso ves cómo pagar.</p>
+
+  <div class="ci-bloque">
+    <p class="ci-bloque-title">Lo que vas a imprimir</p>
+    <div id="ci-res-lineas"></div>
+    <div class="ci-res-line ci-res-desc" id="ci-res-desc" hidden><span>Descuento <span class="ci-res-meta" id="ci-res-desc-cod"></span></span><span id="ci-res-desc-num"></span></div>
+    <div class="ci-res-total"><span>Total</span><strong id="ci-res-total"></strong></div>
+    <div class="ci-cupon">
+      <button type="button" class="ci-cupon-abrir" id="ci-cupon-abrir" aria-expanded="false" aria-controls="ci-cupon-campo">¿Tienes un código de descuento?</button>
+      <div class="ci-field" id="ci-cupon-campo" hidden>
+        <label for="ci-cupon-codigo">Código de descuento</label>
+        <div class="ci-cupon-fila"><input type="text" id="ci-cupon-codigo" maxlength="30" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="ci-cupon-btn" id="ci-cupon-aplicar">Aplicar</button></div>
+      </div>
+      <p class="ci-cupon-estado" id="ci-cupon-estado" aria-live="polite" hidden></p>
+      <button type="button" class="ci-cupon-abrir" id="ci-cupon-quitar" hidden>Quitar el código</button>
+    </div>
+  </div>
+
+  <form id="ci-datos" novalidate>
+    <div class="ci-bloque">
+      <p class="ci-bloque-title">Tus datos</p>
+      <div class="ci-field"><label for="ci-nombre">Nombre completo</label><input type="text" id="ci-nombre" autocomplete="name" maxlength="80"></div>
+      <div class="ci-field"><label for="ci-whatsapp">WhatsApp</label><div class="ci-tel"><select id="ci-indicativo" aria-label="País del número"><option value="+57" selected>+57 Colombia</option><option value="+54">+54 Argentina</option><option value="+55">+55 Brasil</option><option value="+1">+1 EE. UU. y Canadá</option><option value="+56">+56 Chile</option><option value="+593">+593 Ecuador</option><option value="+34">+34 España</option><option value="+52">+52 México</option><option value="+507">+507 Panamá</option><option value="+51">+51 Perú</option><option value="+58">+58 Venezuela</option><option value="">Otro país</option></select><input type="tel" id="ci-whatsapp" autocomplete="tel-national" inputmode="tel" maxlength="22" placeholder="300 123 4567"></div><small id="ci-tel-ayuda">Si tu número no es de Colombia, elige el país.</small></div>
+      <div class="ci-field"><label for="ci-correo">Correo</label><input type="email" id="ci-correo" autocomplete="email" maxlength="120" aria-describedby="ci-correo-sug">
+        <p class="ci-sug" id="ci-correo-sug" aria-live="polite" hidden>¿Quisiste decir <strong id="ci-correo-sug-txt"></strong>? <button type="button" id="ci-correo-sug-si">Sí, corregir</button></p>
+        <small>Cuando confirmemos tu pago, aquí te llega el correo para enviarnos tus fotos.</small></div>
+      <div class="ci-field"><label for="ci-ciudad">Ciudad</label><input type="text" id="ci-ciudad" autocomplete="address-level2" maxlength="60"></div>
+    </div>
+
+    <div class="ci-bloque">
+      <p class="ci-bloque-title">Entrega</p>
+      <div class="ci-opts" role="radiogroup" aria-label="Cómo recibes tu pedido">
+        <label class="ci-opt"><input type="radio" name="ci-entrega" value="ceja"><span class="ci-opt-text"><span class="ci-opt-label">Recoger en La Ceja</span><span class="ci-opt-note">De lunes a viernes, de 10:00 a.&nbsp;m. a 6:00 p.&nbsp;m.</span></span></label>
+        <label class="ci-opt"><input type="radio" name="ci-entrega" value="medellin"><span class="ci-opt-text"><span class="ci-opt-label">Recoger en Medellín</span><span class="ci-opt-note">En la parada Pabellón del Agua EPM del tranvía de Ayacucho. De lunes a viernes, de 10:00 a.&nbsp;m. a 6:00 p.&nbsp;m., el día y la hora que acordemos contigo por WhatsApp.</span></span></label>
+        <label class="ci-opt"><input type="radio" name="ci-entrega" value="envio"><span class="ci-opt-text"><span class="ci-opt-label">Envío a mi dirección</span><span class="ci-opt-note">El envío lo pagas al recibir el paquete (contraentrega).</span></span></label>
+      </div>
+      <div class="ci-field" id="ci-dir-campo" hidden><label for="ci-direccion">Dirección de envío</label><textarea id="ci-direccion" maxlength="300" autocomplete="street-address"></textarea><small>Dirección completa, barrio, ciudad y quién recibe.</small></div>
+    </div>
+
+    <div class="ci-bloque">
+      <div class="ci-field"><label for="ci-obs">Observaciones (opcional)</label><textarea id="ci-obs" maxlength="600"></textarea></div>
+      <div class="ci-opts" style="margin:6px 0 0">
+        <label class="ci-opt"><input type="checkbox" id="ci-autoriza" aria-describedby="ci-falta-autoriza"><span class="ci-opt-text"><span class="ci-opt-label">Autorizo a Estudio sin fondo a usar mis datos para atender mi pedido, según su <a href="politica-de-datos.html" target="_blank" rel="noopener">política de datos</a>.</span></span></label>
+        <label class="ci-opt"><input type="checkbox" id="ci-novedades"><span class="ci-opt-text"><span class="ci-opt-label">Quiero que Estudio sin fondo me escriba por correo o WhatsApp sobre talleres, cursos, kits, impresiones, otros servicios y promociones.</span><span class="ci-opt-note">Opcional. Puedes pedir que dejemos de escribirte cuando quieras.</span></span></label>
+      </div>
+    </div>
+
+    <div class="ci-trampa" aria-hidden="true"><label for="ci-sitio">Sitio web</label><input type="text" id="ci-sitio" tabindex="-1" autocomplete="off"></div>
+    <p class="ci-error" id="ci-error" role="alert"></p>
+    <button class="ci-add" type="submit" id="ci-enviar" disabled>Confirmar pedido</button>
+    <p class="ci-opt-note" id="ci-falta-autoriza" style="margin:8px 0 0;text-align:center">Para confirmar, marca la autorización para atender tu pedido.</p>
+  </form>
+</div>
+
+<div class="ci-paso" id="ci-pago-vista" hidden>
+  <button class="ci-volver" id="ci-otra" type="button">← Hacer otra cotización</button>
+  <p class="ci-paso-num">Pedido registrado</p>
+  <h2 class="ci-title">Tu número de pedido es <span id="ci-pago-num"></span></h2>
+  <div class="ci-bloque">
+    <div class="ci-res-total" style="padding-top:0"><span>Total a pagar</span><span><strong id="ci-pago-total"></strong><button type="button" class="ci-copiar" id="ci-copiar-valor" aria-label="Copiar valor" title="Copiar valor"><svg class="ci-ico-copiar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg><svg class="ci-ico-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>
+  </div>
+
+  <div class="ci-bloque">
+    <p class="ci-paso-num">1 · Paga</p>
+    <div id="ci-pago-medios"></div>
+    <p class="ci-paso-txt">Si pagas por transferencia, escribe en el mensaje tu número de pedido: <strong id="ci-pago-ref"></strong><button type="button" class="ci-copiar" id="ci-copiar-ref" aria-label="Copiar número de pedido" title="Copiar número de pedido"><svg class="ci-ico-copiar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg><svg class="ci-ico-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></p>
+  </div>
+
+  <div class="ci-bloque">
+    <p class="ci-paso-num">2 · Envíanos el comprobante</p>
+    <p class="ci-paso-txt">Mándanos la captura del pago por WhatsApp.</p>
+    <a class="ci-sec" id="ci-pago-wa" href="#" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
+  </div>
+
+  <div class="ci-bloque">
+    <p class="ci-paso-num">3 · Te enviamos un correo</p>
+    <p class="ci-paso-txt">Cuando confirmemos tu pago, te llega un correo para que nos envíes tus fotos. El tiempo de entrega cuenta desde que tenemos el pago y las fotos.</p>
+    <p class="ci-correo-ver" id="ci-pago-correo"></p>
+    <p class="ci-paso-txt" style="margin:0;font-size:13px">¿Está mal escrito? Corrígelo en el mensaje de WhatsApp antes de enviarlo.</p>
+  </div>
+</div>
+
+<div class="ci-modal" id="ci-modal" role="dialog" aria-modal="true" aria-labelledby="ci-modal-title">
+  <div class="ci-modal-box">
+    <h3 class="ci-modal-title" id="ci-modal-title">¿Laminamos tus copias?</h3>
+    <p class="ci-modal-text">El laminado protege tu copia de huellas, rasguños y humedad. Sin laminar, lo ideal es tomarla con guantes de nitrilo limpios.</p>
+    <span class="ci-modal-badge" id="ci-modal-badge"></span>
+    <div class="ci-modal-items" id="ci-modal-items"></div>
+    <div class="ci-modal-total"><span>Tu cotización queda en</span><strong id="ci-modal-total"></strong></div>
+    <div class="ci-modal-actions">
+      <button class="ci-add" id="ci-modal-si">Agregar laminado</button>
+      <button class="ci-sec" id="ci-modal-no">Seguir sin laminado</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CFG = {
+    papeles: {
+      bond: { nombre: "Mate estucado · 170 g", ref50x70: 30000, manejo: 5000 },
+      fuji: { nombre: "Fujifilm Lustre · 190 g", ref50x70: 43000, manejo: 6000, disponible: false }
+    },
+    laminado: { manejo: 1993, pieza: 4412,  r: 1.8843 },
+    ofertaLaminado: 10 / 13,
+    montaje:  { manejo: 3400, pieza: 27462, r: 6.8966, minArea: 20 * 30 },
+    areaRef: 50 * 70,
+    maxAncho: 60,
+    maxLado: 200,
+    entrega: {
+      normal:   { recoger: 2, envioMin: 5, envioMax: 6 },
+      cargado:  { recoger: 3, envioMin: 6, envioMax: 7 },
+      umbralPedidos: 10,
+      pendientes: 0,
+      urlPendientes: "https://script.google.com/macros/s/AKfycbx3UsrbDkOvEDd7EIU0XXtDhIpjV_x9c3u57HGUN-Pyv51WUPi1KkX2Vd2ExyNy4krD/exec"
+    },
+    urlPedidos: "https://script.google.com/macros/s/AKfycbx3UsrbDkOvEDd7EIU0XXtDhIpjV_x9c3u57HGUN-Pyv51WUPi1KkX2Vd2ExyNy4krD/exec",
+    pago: {
+      linkNequi: "https://checkout.nequi.wompi.co/l/sVRccS",
+      llaveBreB: "0093648386"
+    },
+    whatsapp: "573117049547"
+  };
+
+  function pascua(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4,
+        f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3),
+        h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
+        l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+        mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(y, mes - 1, dia);
+  }
+  function masDias(d, n) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; }
+  function alLunes(d) { var dow = d.getDay(); return dow === 1 ? d : masDias(d, (8 - dow) % 7); }
+  function clave(d) { return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  var cacheFestivos = {};
+  function festivos(y) {
+    if (cacheFestivos[y]) return cacheFestivos[y];
+    var F = {}, add = function (d) { F[clave(d)] = true; };
+    [[0,1],[4,1],[6,20],[7,7],[11,8],[11,25]].forEach(function (md) { add(new Date(y, md[0], md[1])); });
+    var emiliani = [[0,6],[2,19],[5,29],[7,15],[9,12],[10,1],[10,11]];
+    if (y >= 2026) emiliani.push([6,9]);
+    emiliani.forEach(function (md) { add(alLunes(new Date(y, md[0], md[1]))); });
+    var p = pascua(y);
+    add(masDias(p, -3)); add(masDias(p, -2));
+    add(masDias(p, 43)); add(masDias(p, 64)); add(masDias(p, 71));
+    cacheFestivos[y] = F; return F;
+  }
+  function esHabil(d) { var w = d.getDay(); return w !== 0 && w !== 6 && !festivos(d.getFullYear())[clave(d)]; }
+  function sumarHabiles(desde, n) { var d = desde; while (n > 0) { d = masDias(d, 1); if (esHabil(d)) n--; } return d; }
+  var DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  function fecha(d) { return DIAS[d.getDay()] + " " + d.getDate() + " de " + MESES[d.getMonth()]; }
+
+  function precioCm2(papel) {
+    var c = CFG.papeles[papel];
+    return (c.ref50x70 - c.manejo) / CFG.areaRef;
+  }
+
+  function cotizar(w, h, papel, q, lam, mon, oferta) {
+    var cfg = CFG.papeles[papel];
+    var area = w * h;
+
+    var impUnit = area * precioCm2(papel);
+    var impTot  = cfg.manejo + q * impUnit;
+
+    var lamTot = 0;
+    if (lam) {
+      lamTot = CFG.laminado.manejo + q * (CFG.laminado.pieza + area * CFG.laminado.r);
+      if (oferta) lamTot *= CFG.ofertaLaminado;
+    }
+
+    var monTot = 0;
+    if (mon && area >= CFG.montaje.minArea) {
+      monTot = CFG.montaje.manejo + q * (CFG.montaje.pieza + area * CFG.montaje.r);
+    }
+
+    var total = impTot + lamTot + monTot;
+    return {
+      area: area, total: Math.round(total), unitario: Math.round(total / q), lamTot: Math.round(lamTot),
+      lam: lam, mon: mon && area >= CFG.montaje.minArea
+    };
+  }
+
+  function cop(n) { return "$" + Math.round(n).toLocaleString("es-CO"); }
+  function cabe(w, h) { return Math.min(w, h) <= CFG.maxAncho && Math.max(w, h) <= CFG.maxLado; }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var elW = $("ci-w"), elH = $("ci-h"), elP = $("ci-p"), elQ = $("ci-q");
+  var elLam = $("ci-lam"), elMon = $("ci-mon");
+  var elOptMon = $("ci-opt-mon"), elMonNote = $("ci-mon-note");
+  var elLive = $("ci-live"), elLiveUnit = $("ci-liveunit");
+  var elWarn = $("ci-warn"), elAdd = $("ci-add");
+  var elLines = $("ci-lines"), elTotal = $("ci-total"), elCount = $("ci-count");
+
+  var elEntrega = $("ci-entrega"), elPedir = $("ci-pedir");
+  var elModal = $("ci-modal"), elMItems = $("ci-modal-items"), elMTotal = $("ci-modal-total"), elMBadge = $("ci-modal-badge");
+
+  var pedido = [];
+
+  function totalPedido(conOfertaEn) {
+    return pedido.reduce(function (t, it, i) {
+      var lam = it.lam || (conOfertaEn && conOfertaEn[i]);
+      var of = it.oferta || (conOfertaEn && conOfertaEn[i] && !it.lam);
+      return t + cotizar(it.w, it.h, it.p, it.q, lam, it.mon, of).total;
+    }, 0);
+  }
+
+  function pintarEntrega() {
+    var E = CFG.entrega, t = E.pendientes > E.umbralPedidos ? E.cargado : E.normal;
+    var hoy = new Date(), base = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    elEntrega.innerHTML = '<p class="ci-entrega-title">Tiempo de entrega</p>'
+      + '<p>Si confirmas tu pago y nos envías tus fotos hoy:</p>'
+      + '<p>Recoges en La Ceja o en Medellín desde el <strong>' + fecha(sumarHabiles(base, t.recoger)) + '</strong>, entre las 10:00 a. m. y las 6:00 p. m.</p>'
+      + '<p>Con envío, te llega entre el <strong>' + fecha(sumarHabiles(base, t.envioMin)) + '</strong> y el <strong>'
+      + fecha(sumarHabiles(base, t.envioMax)) + '</strong>.</p>'
+      + '<p class="ci-entrega-nota">El envío lo pagas tú al recibir el paquete (contraentrega).</p>';
+  }
+
+  function cargarPendientes() {
+    var u = CFG.entrega.urlPendientes;
+    if (!u || !window.fetch) return;
+    fetch(u).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && typeof j.pendientes === "number") { CFG.entrega.pendientes = j.pendientes; pintarEntrega(); }
+    }).catch(function () {});
+  }
+
+  var marcados = [];
+  function sinLaminar() { return pedido.map(function (it, i) { return it.lam ? -1 : i; }).filter(function (i) { return i >= 0; }); }
+  function pintarModal() {
+    var html = "";
+    sinLaminar().forEach(function (i) {
+      var it = pedido[i];
+      var lista = cotizar(it.w, it.h, it.p, it.q, true, false, false).lamTot;
+      var oferta = cotizar(it.w, it.h, it.p, it.q, true, false, true).lamTot;
+      html += '<label class="ci-opt ci-modal-item"><input type="checkbox" data-i="' + i + '"' + (marcados[i] ? " checked" : "") + '>'
+        + '<span class="ci-opt-text"><span class="ci-opt-label">' + it.w + " × " + it.h + " cm · " + it.q + (it.q === 1 ? " copia" : " copias") + '</span>'
+        + '<span class="ci-opt-note">Laminado <s>' + cop(lista) + '</s> ' + cop(oferta) + ' · ahorras ' + cop(lista - oferta) + '</span></span></label>';
+    });
+    elMItems.innerHTML = html;
+    elMTotal.textContent = cop(totalPedido(marcados));
+    Array.prototype.forEach.call(elMItems.querySelectorAll("input"), function (c) {
+      c.addEventListener("change", function () { marcados[parseInt(c.dataset.i, 10)] = c.checked; elMTotal.textContent = cop(totalPedido(marcados)); });
+    });
+  }
+  function abrirModal() {
+    marcados = []; sinLaminar().forEach(function (i) { marcados[i] = true; });
+    elMBadge.textContent = Math.round((1 - CFG.ofertaLaminado) * 100) + " % de descuento si agregas el laminado a esta cotización";
+    pintarModal(); elModal.classList.add("ci-on"); $("ci-modal-si").focus();
+  }
+  function cerrarModal() { elModal.classList.remove("ci-on"); }
+  var vistas = { calc: [$("ci-aviso"), document.querySelector("#calc-impresion .ci-head"), document.querySelector("#calc-impresion .ci-grid")],
+                 datos: [$("ci-datos-vista")], pago: [$("ci-pago-vista")] };
+  function mostrar(v) {
+    Object.keys(vistas).forEach(function (k) { vistas[k].forEach(function (el) { el.hidden = k !== v; }); });
+    if (v === "calc") avisoPedido();
+    var raiz = $("calc-impresion"); if (raiz.scrollIntoView) raiz.scrollIntoView({ block: "start" });
+  }
+  function textoItem(it, r) {
+    var extras = [];
+    if (r.lam) extras.push(it.oferta ? "laminado con descuento" : "laminado");
+    if (r.mon) extras.push("montaje en madera");
+    return { nombre: it.q + (it.q === 1 ? " copia · " : " copias · ") + it.w + " × " + it.h + " cm",
+             meta: CFG.papeles[it.p].nombre + (extras.length ? " · " + extras.join(" + ") : "") };
+  }
+  function irAlFormulario() {
+    if (!pedido.length) return;
+    var html = "";
+    pedido.forEach(function (it) {
+      var r = cotizar(it.w, it.h, it.p, it.q, it.lam, it.mon, it.oferta), t = textoItem(it, r);
+      html += '<div class="ci-res-line"><span>' + t.nombre + '<span class="ci-res-meta">' + t.meta + '</span></span><span>' + cop(r.total) + '</span></div>';
+    });
+    $("ci-res-lineas").innerHTML = html;
+    if (cupon && cupon.minimo && totalPedido() < cupon.minimo) {
+      var minimo = cupon.minimo; quitarCupon();
+      estadoCupon("Quitamos el código: es para pedidos desde " + cop(minimo) + ".", true);
+    } else if (cupon && cupon.soloMontaje && !totalMontaje()) {
+      quitarCupon();
+      estadoCupon("Quitamos el código: es solo para impresiones con montaje sobre madera, y tu pedido ya no tiene ninguna. Si quieres usarlo, vuelve a la cotización, elige el montaje en una impresión desde 20 × 30 cm y aplícalo otra vez.", true);
+    }
+    pintarTotalPedido();
+    error("");
+    mostrar("datos");
+    $("ci-nombre").focus({ preventScroll: true });
+  }
+  var cupon = null;
+  function totalMontaje() {
+    return pedido.reduce(function (t, it) {
+      var r = cotizar(it.w, it.h, it.p, it.q, it.lam, it.mon, it.oferta);
+      return t + (r.mon ? r.total : 0);
+    }, 0);
+  }
+  function descuentoCupon() {
+    if (!cupon) return 0;
+    var base = cupon.soloMontaje ? totalMontaje() : totalPedido();
+    return cupon.tipo === "%" ? Math.round(base * cupon.valor / 100) : Math.min(Math.round(cupon.valor), base);
+  }
+  function totalConCupon() { return totalPedido() - descuentoCupon(); }
+  function pintarTotalPedido() {
+    var t = totalPedido(), dsc = descuentoCupon();
+    $("ci-res-desc").hidden = !dsc;
+    if (dsc) {
+      $("ci-res-desc-cod").textContent = cupon.codigo + (cupon.soloMontaje ? " · en impresiones con montaje sobre madera" : "");
+      $("ci-res-desc-num").textContent = "−" + cop(dsc);
+    }
+    $("ci-res-total").textContent = cop(t - dsc);
+  }
+  function estadoCupon(texto, mal, html) {
+    var p = $("ci-cupon-estado");
+    if (html) p.innerHTML = html; else p.textContent = texto;
+    p.classList.toggle("ci-mal", !!mal);
+    p.hidden = !texto && !html;
+  }
+  function quitarCupon() {
+    cupon = null;
+    $("ci-cupon-codigo").value = "";
+    $("ci-cupon-quitar").hidden = true;
+    $("ci-cupon-abrir").hidden = false;
+    $("ci-cupon-campo").hidden = true;
+    $("ci-cupon-abrir").setAttribute("aria-expanded", "false");
+    estadoCupon("");
+    pintarTotalPedido();
+  }
+  function textoSeguro(t) { var d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+  $("ci-cupon-abrir").addEventListener("click", function () {
+    var abierto = !$("ci-cupon-campo").hidden;
+    $("ci-cupon-campo").hidden = abierto;
+    this.setAttribute("aria-expanded", String(!abierto));
+    if (!abierto) $("ci-cupon-codigo").focus();
+  });
+  $("ci-cupon-quitar").addEventListener("click", quitarCupon);
+  $("ci-cupon-codigo").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("ci-cupon-aplicar").click(); } });
+  $("ci-cupon-aplicar").addEventListener("click", function () {
+    var codigo = $("ci-cupon-codigo").value.trim();
+    if (!codigo) { estadoCupon("Escribe tu código.", true); $("ci-cupon-codigo").focus(); return; }
+    if (!CFG.urlPedidos || !window.fetch) { estadoCupon("Por ahora no podemos revisar códigos aquí. Escríbenos por WhatsApp.", true); return; }
+    var btn = this; btn.disabled = true; btn.textContent = "Revisando…"; estadoCupon("");
+    fetch(CFG.urlPedidos, { method: "POST", body: JSON.stringify({ accion: "cupon", codigo: codigo, total: totalPedido(), totalMontaje: totalMontaje() }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) { estadoCupon((j && j.error) || "Ese código no es válido.", true); return; }
+        cupon = { codigo: j.codigo, tipo: j.tipo, valor: Number(j.valor), minimo: Number(j.minimo) || 0, soloMontaje: j.soloMontaje === true, condiciones: j.condiciones };
+        $("ci-cupon-campo").hidden = true;
+        $("ci-cupon-abrir").hidden = true;
+        $("ci-cupon-quitar").hidden = false;
+        estadoCupon("", false, "<strong>Código " + textoSeguro(cupon.codigo) + " aplicado.</strong> " + textoSeguro(cupon.condiciones));
+        pintarTotalPedido();
+      })
+      .catch(function () { estadoCupon("No pudimos revisar el código. Revisa tu conexión e intenta de nuevo.", true); })
+      .then(function () { btn.disabled = false; btn.textContent = "Aplicar"; });
+  });
+
+  $("ci-volver").addEventListener("click", function () { mostrar("calc"); });
+  $("ci-otra").addEventListener("click", function () { mostrar("calc"); });
+  $("ci-aviso-ver").addEventListener("click", function () { var g = ultimoPedido(); if (g) pintarPago(g); });
+
+  var CLAVE_PEDIDO = "esf-ultimo-pedido", VIGENCIA = 3 * 24 * 60 * 60 * 1000;
+  function guardarPedido(g) { try { localStorage.setItem(CLAVE_PEDIDO, JSON.stringify(g)); } catch (e) {} }
+  function ultimoPedido() {
+    try {
+      var g = JSON.parse(localStorage.getItem(CLAVE_PEDIDO) || "null");
+      if (g && g.pedido && Date.now() - g.fecha < VIGENCIA) return g;
+      localStorage.removeItem(CLAVE_PEDIDO);
+    } catch (e) {}
+    return null;
+  }
+  function avisoPedido() {
+    var g = ultimoPedido();
+    $("ci-aviso").hidden = !g;
+    if (g) $("ci-aviso-num").textContent = g.pedido;
+  }
+
+  var DOMINIOS = ["gmail.com", "hotmail.com", "hotmail.es", "outlook.com", "outlook.es", "yahoo.com", "yahoo.es",
+                  "icloud.com", "live.com", "me.com", "msn.com"];
+  var DOMINIOS_VALIDOS = ["mail.com", "email.com", "ymail.com", "gmx.com", "aol.com", "proton.me", "protonmail.com",
+                          "hotmail.fr", "hotmail.it", "outlook.fr", "yahoo.fr", "live.com.mx", "hotmail.com.ar"];
+  function distancia(a, b) {
+    var d = [], i, j;
+    for (i = 0; i <= a.length; i++) { d[i] = [i]; }
+    for (j = 0; j <= b.length; j++) { d[0][j] = j; }
+    for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++) {
+      var c = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+    return d[a.length][b.length];
+  }
+  function sugerirCorreo(correo) {
+    var m = /^([^\s@]+)@([^\s@]+)$/.exec(correo.trim().toLowerCase());
+    if (!m || DOMINIOS.indexOf(m[2]) !== -1 || DOMINIOS_VALIDOS.indexOf(m[2]) !== -1) return "";
+    var mejor = "", menor = 99;
+    DOMINIOS.forEach(function (dom) { var x = distancia(m[2], dom); if (x < menor) { menor = x; mejor = dom; } });
+    return menor <= (mejor.length >= 9 ? 2 : 1) ? m[1] + "@" + mejor : "";
+  }
+  var correoAvisado = "";
+  function revisarCorreo() {
+    var s = sugerirCorreo($("ci-correo").value);
+    $("ci-correo-sug-txt").textContent = s;
+    $("ci-correo-sug").hidden = !s;
+    return s;
+  }
+  $("ci-correo").addEventListener("blur", revisarCorreo);
+  $("ci-correo").addEventListener("input", function () { if (!$("ci-correo-sug").hidden) revisarCorreo(); });
+  $("ci-correo-sug-si").addEventListener("click", function () {
+    $("ci-correo").value = $("ci-correo-sug-txt").textContent; $("ci-correo-sug").hidden = true; $("ci-correo").focus();
+  });
+
+  var radiosEntrega = document.querySelectorAll('#calc-impresion input[name="ci-entrega"]');
+  function entregaElegida() { var v = ""; Array.prototype.forEach.call(radiosEntrega, function (r) { if (r.checked) v = r.value; }); return v; }
+  Array.prototype.forEach.call(radiosEntrega, function (r) {
+    r.addEventListener("change", function () { $("ci-dir-campo").hidden = entregaElegida() !== "envio"; });
+  });
+  function error(msg, campo) {
+    var el = $("ci-error"); el.textContent = msg; el.classList.toggle("ci-on", !!msg);
+    if (campo) $(campo).focus();
+  }
+
+  function normalizarWhatsapp(indicativo, numero) {
+    var n = String(numero || "").replace(/[\s\-().\/]/g, "");
+    if (/^00\d/.test(n)) n = "+" + n.slice(2);
+    if (n.charAt(0) === "+") return /^\+[1-9]\d{6,14}$/.test(n) && (n.indexOf("+57") !== 0 || n.length === 13) ? n : "";
+    if (!/^\d+$/.test(n)) return "";
+    var cc = String(indicativo || "").replace(/\D/g, "");
+    if (!cc) return "";
+    if (cc === "57") {
+      if (n.length === 12 && n.indexOf("57") === 0) n = n.slice(2);
+      return n.length === 10 ? "+57" + n : "";
+    }
+    n = n.replace(/^0+/, "");
+    return n.length >= 6 && cc.length + n.length <= 15 ? "+" + cc + n : "";
+  }
+  $("ci-indicativo").addEventListener("change", function () {
+    $("ci-whatsapp").placeholder = this.value === "+57" ? "300 123 4567" : (this.value ? "Número sin el indicativo" : "+44 7700 900123");
+  });
+
+  function activarEnviar() {
+    var ok = $("ci-autoriza").checked;
+    $("ci-enviar").disabled = !ok;
+    $("ci-falta-autoriza").hidden = ok;
+  }
+  $("ci-autoriza").addEventListener("change", activarEnviar);
+
+  $("ci-datos").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var d = {
+      nombre: $("ci-nombre").value.trim(), indicativo: $("ci-indicativo").value, whatsapp: $("ci-whatsapp").value.trim(), correo: $("ci-correo").value.trim(),
+      ciudad: $("ci-ciudad").value.trim(), entrega: entregaElegida(), direccion: $("ci-direccion").value.trim(),
+      observaciones: $("ci-obs").value.trim(), autoriza: $("ci-autoriza").checked, novedades: $("ci-novedades").checked, sitio: $("ci-sitio").value,
+      items: pedido.map(function (it) { return { w: it.w, h: it.h, p: it.p, q: it.q, lam: !!it.lam, oferta: !!it.oferta, mon: !!it.mon }; }),
+      totalMostrado: totalConCupon(), cupon: cupon ? cupon.codigo : ""
+    };
+    if (!d.nombre) return error("Falta tu nombre.", "ci-nombre");
+    if (!normalizarWhatsapp(d.indicativo, d.whatsapp)) return error(d.indicativo === "+57"
+      ? "Revisa tu número de WhatsApp: en Colombia tiene 10 dígitos. Si no es de Colombia, elige el país."
+      : (d.indicativo ? "Revisa tu número de WhatsApp." : "Escribe tu número con + y el indicativo de tu país, por ejemplo +44 7700 900123."), "ci-whatsapp");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo)) return error("Revisa tu correo: debe tener @ y un dominio, como .com.", "ci-correo");
+    if (revisarCorreo() && correoAvisado !== d.correo) {
+      correoAvisado = d.correo;
+      return error("Revisa tu correo: ¿quisiste decir " + sugerirCorreo(d.correo) + "? Si el tuyo está bien, toca «Confirmar pedido» otra vez.", "ci-correo");
+    }
+    if (!d.ciudad) return error("Falta tu ciudad.", "ci-ciudad");
+    if (!d.entrega) return error("Elige cómo recibes tu pedido.");
+    if (d.entrega === "envio" && !d.direccion) return error("Falta la dirección de envío.", "ci-direccion");
+    if (!d.autoriza) return error("Para hacer el pedido necesitamos tu autorización de datos.");
+    if (!CFG.urlPedidos || !window.fetch) return error("Por ahora no podemos recibir pedidos aquí. Escríbenos por WhatsApp al +57 311 704 9547.");
+
+    var btn = $("ci-enviar"); btn.disabled = true; btn.textContent = "Enviando tu pedido…"; error("");
+    fetch(CFG.urlPedidos, { method: "POST", body: JSON.stringify(d) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) { var e = new Error((j && j.error) || ""); e.servidor = true; throw e; }
+        var g = { pedido: j.pedido, total: j.total, totalTexto: j.totalTexto || cop(j.total), correo: d.correo, fecha: Date.now() };
+        guardarPedido(g);
+        pedido = []; pintar();
+        quitarCupon();
+        pintarPago(g);
+      })
+      .catch(function (err) {
+        error((err && err.servidor && err.message) || "No pudimos enviar tu pedido. Revisa tu conexión e intenta de nuevo, o escríbenos por WhatsApp al +57 311 704 9547.");
+      })
+      .then(function () { btn.textContent = "Confirmar pedido"; activarEnviar(); });
+  });
+
+  function pintarPago(g) {
+    var total = g.totalTexto;
+    $("ci-pago-num").textContent = g.pedido;
+    $("ci-pago-ref").textContent = g.pedido;
+    $("ci-pago-total").textContent = total;
+    $("ci-pago-correo").textContent = g.correo;
+    var P = CFG.pago, html = "";
+    if (P.linkNequi) html += '<a class="ci-add" href="' + P.linkNequi + '" target="_blank" rel="noopener" style="margin-bottom:6px">Pagar ' + total + ' en línea</a>'
+      + '<p class="ci-paso-txt" style="font-size:12.5px">Con tarjeta débito o crédito, PSE, Nequi o Bancolombia. Escribe el valor exacto: ' + total + '.</p>'
+      + '<p class="ci-paso-txt"><strong>Cuando pagues, vuelve a esta página</strong> para enviarnos la captura del pago. '
+      + 'Si se cerró, ábrela de nuevo desde donde la abriste la primera vez: tu pedido seguirá aquí durante tres días. '
+      + 'Por si acaso, guarda tu número de pedido; con él también puedes escribirnos por WhatsApp.</p>';
+    if (P.llaveBreB) html += '<p class="ci-paso-txt">' + (P.linkNequi ? "O transfiere" : "Transfiere") + ' <strong>' + total + '</strong> desde cualquier banco o Nequi a nuestra llave Bre-B (transferencias inmediatas entre bancos y billeteras):</p><p class="ci-llave">' + P.llaveBreB + '<button type="button" class="ci-copiar" id="ci-copiar-llave" aria-label="Copiar llave" title="Copiar llave"><svg class=\"ci-ico-copiar\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"12\" height=\"12\" rx=\"1.5\"/><path d=\"M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5\"/></svg><svg class=\"ci-ico-ok\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></button></p>';
+    if (!html) html = '<p class="ci-paso-txt">Escríbenos por WhatsApp y te enviamos los datos para pagar <strong>' + total + '</strong>.</p>';
+    $("ci-pago-medios").innerHTML = html;
+    $("ci-pago-wa").href = "https://wa.me/" + CFG.whatsapp + "?text=" + encodeURIComponent(
+      "Hola, hice el pedido " + g.pedido + " por " + total + ". Mi correo es " + g.correo + ". Te envío el comprobante de pago.");
+    copiar("ci-copiar-valor", String(g.total), "Copiar valor");
+    copiar("ci-copiar-ref", g.pedido, "Copiar número de pedido");
+    if ($("ci-copiar-llave")) copiar("ci-copiar-llave", P.llaveBreB, "Copiar llave");
+    mostrar("pago");
+  }
+  function copiar(id, texto, etiqueta) {
+    var b = $(id);
+    b.onclick = function () {
+      var listo = function () { b.classList.add("ci-ok"); b.setAttribute("aria-label", "Copiado"); b.title = "Copiado";
+        setTimeout(function () { b.classList.remove("ci-ok"); b.setAttribute("aria-label", etiqueta); b.title = etiqueta; }, 2000); };
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(texto).then(listo, function () { respaldo(texto); listo(); });
+      else { respaldo(texto); listo(); }
+    };
+  }
+  function respaldo(texto) {
+    var t = document.createElement("textarea"); t.value = texto; t.setAttribute("readonly", ""); t.style.position = "fixed"; t.style.opacity = "0";
+    document.body.appendChild(t); t.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(t);
+  }
+  elPedir.addEventListener("click", function () {
+    if (!pedido.length) return;
+    if (sinLaminar().length) abrirModal(); else irAlFormulario();
+  });
+  $("ci-modal-si").addEventListener("click", function () {
+    pedido.forEach(function (it, i) { if (marcados[i] && !it.lam) { it.lam = true; it.oferta = true; } });
+    cerrarModal(); pintar(); irAlFormulario();
+  });
+  $("ci-modal-no").addEventListener("click", function () { cerrarModal(); irAlFormulario(); });
+  elModal.addEventListener("click", function (e) { if (e.target === elModal) cerrarModal(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") cerrarModal(); });
+
+  function leer() {
+    var w = parseFloat(elW.value) || 0, h = parseFloat(elH.value) || 0;
+    var q = Math.max(1, parseInt(elQ.value, 10) || 1);
+    if (q > 999) { q = 999; elQ.value = "999"; }
+    return { w: w, h: h, p: elP.value, q: q,
+             lam: elLam.checked, mon: elMon.checked };
+  }
+
+  function refrescar() {
+    var v = leer();
+    var ok = v.w > 0 && v.h > 0 && cabe(v.w, v.h);
+    elWarn.classList.toggle("ci-on", v.w > 0 && v.h > 0 && !cabe(v.w, v.h));
+    elAdd.disabled = !ok;
+
+    var area = v.w * v.h;
+    var monOk = area >= CFG.montaje.minArea;
+    elMon.disabled = !monOk;
+    elOptMon.classList.toggle("ci-disabled", !monOk);
+    if (!monOk && elMon.checked) elMon.checked = false;
+    elMonNote.textContent = monOk
+      ? "Listo para colgar · MDF 9 mm"
+      : "Disponible desde 20 × 30 cm";
+
+    if (!ok) { elLive.textContent = "—"; elLiveUnit.textContent = ""; return; }
+
+    var r = cotizar(v.w, v.h, v.p, v.q, v.lam, v.mon);
+    elLive.textContent = cop(r.total);
+
+    var extras = [];
+    if (r.lam) extras.push("laminado");
+    if (r.mon) extras.push("montaje");
+    var extraStr = extras.length ? " + " + extras.join(" + ") : "";
+
+    elLiveUnit.textContent = v.q === 1
+      ? "1 copia" + extraStr
+      : v.q + " copias · " + cop(r.unitario) + " c/u" + extraStr;
+  }
+
+  function pintar() {
+    if (!pedido.length) {
+      elLines.innerHTML = '<p class="ci-empty">Todavía no has agregado nada.</p>';
+      elTotal.textContent = "$0"; elCount.textContent = "";
+      elPedir.disabled = true; pintarEntrega(); return;
+    }
+    var html = "", total = 0, copias = 0;
+    pedido.forEach(function (it, i) {
+      var r = cotizar(it.w, it.h, it.p, it.q, it.lam, it.mon, it.oferta);
+      total += r.total; copias += it.q;
+      var extras = [];
+      if (r.lam) extras.push(it.oferta ? 'laminado <span class="ci-oferta-tag">con descuento</span>' : "laminado");
+      if (r.mon) extras.push("montaje");
+      var extraStr = extras.length ? " · " + extras.join(" + ") : "";
+      html += '<div class="ci-line">'
+        + '<div class="ci-line-main">'
+        + '<div class="ci-line-name">' + it.w + " × " + it.h + " cm · " + CFG.papeles[it.p].nombre + '</div>'
+        + '<div class="ci-line-meta">' + it.q + (it.q === 1 ? " copia" : " copias")
+        + " · " + cop(r.unitario) + " c/u" + extraStr + '</div>'
+        + '</div>'
+        + '<div class="ci-line-price">' + cop(r.total) + '</div>'
+        + '<button class="ci-del" data-i="' + i + '" aria-label="Quitar">&times;</button>'
+        + '</div>';
+    });
+    elLines.innerHTML = html;
+    elTotal.textContent = cop(total);
+    elCount.textContent = copias + (copias === 1 ? " copia" : " copias");
+    elPedir.disabled = false;
+    pintarEntrega();
+
+    Array.prototype.forEach.call(elLines.querySelectorAll(".ci-del"), function (b) {
+      b.addEventListener("click", function () {
+        pedido.splice(parseInt(b.dataset.i, 10), 1); pintar();
+      });
+    });
+  }
+
+  [elW, elH, elP, elQ, elLam, elMon].forEach(function (el) {
+    el.addEventListener("input", refrescar);
+    el.addEventListener("change", refrescar);
+  });
+
+  elAdd.addEventListener("click", function () {
+    var v = leer();
+    if (!cabe(v.w, v.h) || v.w <= 0 || v.h <= 0) return;
+    var igual = pedido.find(function (it) {
+      return it.w === v.w && it.h === v.h && it.p === v.p && it.lam === v.lam && it.mon === v.mon && !it.oferta;
+    });
+    if (igual) { igual.q += v.q; }
+    else { pedido.push({ w: v.w, h: v.h, p: v.p, q: v.q, lam: v.lam, mon: v.mon }); }
+    pintar();
+  });
+
+  Array.prototype.forEach.call(elP.options, function (o) {
+    var c = CFG.papeles[o.value];
+    if (c && c.disponible === false) {
+      o.disabled = true;
+      o.textContent = c.nombre + " · No disponible por ahora";
+      if (elP.value === o.value) {
+        var libre = Array.prototype.find.call(elP.options, function (x) { return !x.disabled; });
+        if (libre) elP.value = libre.value;
+      }
+    }
+  });
+
+  refrescar(); pintar(); cargarPendientes();
+  var guardado = ultimoPedido();
+  if (guardado && Date.now() - guardado.fecha < 24 * 60 * 60 * 1000) pintarPago(guardado);
+  else avisoPedido();
+})();
+</script>
+</div>
+</body>
+</html>
