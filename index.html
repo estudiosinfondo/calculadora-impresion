@@ -96,6 +96,7 @@
   #calc-impresion .ci-entrega-title{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:rgba(236,231,220,.55);margin:0 0 8px}
   #calc-impresion .ci-entrega p{margin:0 0 6px}
   #calc-impresion .ci-entrega strong{font-weight:600;color:var(--papel)}
+  #calc-impresion .ci-entrega .ci-entrega-despues{margin-top:12px}
   #calc-impresion .ci-entrega .ci-entrega-nota{font-size:12px;color:rgba(236,231,220,.45);margin:8px 0 0}
   #calc-impresion .ci-pedir{margin-top:16px}
   #calc-impresion .ci-oferta-tag{color:var(--verde)}
@@ -360,6 +361,7 @@
       bond: { nombre: "Mate estucado · 170 g", ref50x70: 30000, manejo: 5000 },
       fuji: { nombre: "Fujifilm Lustre · 190 g", ref50x70: 43000, manejo: 6000, disponible: false }
     },
+    copiaExtra: 3500,
     laminado: { manejo: 1993, pieza: 4412,  r: 1.8843 },
     ofertaLaminado: 10 / 13,
     montaje:  { manejo: 3400, pieza: 27462, r: 6.8966, minArea: 20 * 30 },
@@ -369,8 +371,8 @@
     entrega: {
       normal:   { recoger: 2, envioMin: 5, envioMax: 6 },
       cargado:  { recoger: 3, envioMin: 6, envioMax: 7 },
-      umbralPedidos: 10,
-      pendientes: 0,
+      horaCorte: 14, topeMontaje: 5, topeOtras: 10,
+      montaje: 0, otras: 0,
       urlPendientes: "https://script.google.com/macros/s/AKfycbx3UsrbDkOvEDd7EIU0XXtDhIpjV_x9c3u57HGUN-Pyv51WUPi1KkX2Vd2ExyNy4krD/exec"
     },
     urlPedidos: "https://script.google.com/macros/s/AKfycbx3UsrbDkOvEDd7EIU0XXtDhIpjV_x9c3u57HGUN-Pyv51WUPi1KkX2Vd2ExyNy4krD/exec",
@@ -421,7 +423,7 @@
     var area = w * h;
 
     var impUnit = area * precioCm2(papel);
-    var impTot  = cfg.manejo + q * impUnit;
+    var impTot  = cfg.manejo + (q - 1) * CFG.copiaExtra + q * impUnit;
 
     var lamTot = 0;
     if (lam) {
@@ -465,22 +467,53 @@
     }, 0);
   }
 
+  function ahoraColombia() {
+    try {
+      var p = {};
+      new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", hourCycle: "h23" })
+        .formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+      return { dia: new Date(+p.year, +p.month - 1, +p.day), hora: (+p.hour) % 24 };
+    } catch (e) {
+      var d = new Date();
+      return { dia: new Date(d.getFullYear(), d.getMonth(), d.getDate()), hora: d.getHours() };
+    }
+  }
+  function horaTexto(h) { return (h % 12 || 12) + ":00\u00a0" + (h < 12 ? "a.\u00a0m." : "p.\u00a0m."); }
+
   function pintarEntrega() {
-    var E = CFG.entrega, t = E.pendientes > E.umbralPedidos ? E.cargado : E.normal;
-    var hoy = new Date(), base = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-    elEntrega.innerHTML = '<p class="ci-entrega-title">Tiempo de entrega</p>'
-      + '<p>Si confirmas tu pago y nos envías tus fotos hoy:</p>'
-      + '<p>Recoges en La Ceja o en Medellín desde el <strong>' + fecha(sumarHabiles(base, t.recoger)) + '</strong>, entre las 10:00 a. m. y las 6:00 p. m.</p>'
-      + '<p>Con envío, te llega entre el <strong>' + fecha(sumarHabiles(base, t.envioMin)) + '</strong> y el <strong>'
-      + fecha(sumarHabiles(base, t.envioMax)) + '</strong>.</p>'
-      + '<p class="ci-entrega-nota">El envío lo pagas tú al recibir el paquete (contraentrega).</p>';
+    var E = CFG.entrega, mon = E.montaje, otras = E.otras;
+    pedido.forEach(function (it) {
+      var r = cotizar(it.w, it.h, it.p, it.q, it.lam, it.mon, it.oferta);
+      if (r.mon) mon += it.q; else otras += it.q;
+    });
+    var t = mon >= E.topeMontaje || otras >= E.topeOtras ? E.cargado : E.normal;
+    var ahora = ahoraColombia(), hoy = ahora.dia;
+    function siguiente(d) { do { d = masDias(d, 1); } while (!esHabil(d)); return d; }
+    function fechas(base) {
+      var a = sumarHabiles(base, t.envioMin), b = sumarHabiles(base, t.envioMax);
+      var desde = a.getMonth() === b.getMonth() ? DIAS[a.getDay()] + " " + a.getDate() : fecha(a);
+      return '<p>Recoges desde el <strong>' + fecha(sumarHabiles(base, t.recoger)) + '</strong>. '
+        + 'Con envío, te llega entre el <strong>' + desde + '</strong> y el <strong>' + fecha(b) + '</strong>.</p>';
+    }
+    var html = '<p class="ci-entrega-title">Tiempo de entrega</p>';
+    if (esHabil(hoy) && ahora.hora < E.horaCorte) {
+      html += '<p>Si nos envías tus fotos hoy antes de las ' + horaTexto(E.horaCorte) + ':</p>' + fechas(hoy)
+        + '<p class="ci-entrega-despues">Si nos las envías después de esa hora:</p>' + fechas(siguiente(hoy));
+    } else {
+      html += '<p>Si nos envías tus fotos hoy:</p>' + fechas(siguiente(hoy));
+    }
+    elEntrega.innerHTML = html;
   }
 
   function cargarPendientes() {
     var u = CFG.entrega.urlPendientes;
     if (!u || !window.fetch) return;
     fetch(u).then(function (r) { return r.json(); }).then(function (j) {
-      if (j && typeof j.pendientes === "number") { CFG.entrega.pendientes = j.pendientes; pintarEntrega(); }
+      if (!j || typeof j.montaje !== "number" || typeof j.otras !== "number") return;
+      var E = CFG.entrega;
+      E.montaje = j.montaje; E.otras = j.otras;
+      ["topeMontaje", "topeOtras", "horaCorte"].forEach(function (k) { if (typeof j[k] === "number") E[k] = j[k]; });
+      pintarEntrega();
     }).catch(function () {});
   }
 
@@ -871,7 +904,8 @@
     var v = leer();
     if (!cabe(v.w, v.h) || v.w <= 0 || v.h <= 0) return;
     var igual = pedido.find(function (it) {
-      return it.w === v.w && it.h === v.h && it.p === v.p && it.lam === v.lam && it.mon === v.mon && !it.oferta;
+      var mismaMedida = (it.w === v.w && it.h === v.h) || (it.w === v.h && it.h === v.w);
+      return mismaMedida && it.p === v.p && it.lam === v.lam && it.mon === v.mon && !it.oferta;
     });
     if (igual) { igual.q += v.q; }
     else { pedido.push({ w: v.w, h: v.h, p: v.p, q: v.q, lam: v.lam, mon: v.mon }); }
@@ -891,6 +925,7 @@
   });
 
   refrescar(); pintar(); cargarPendientes();
+  setInterval(pintarEntrega, 60000);
   var guardado = ultimoPedido();
   if (guardado && Date.now() - guardado.fecha < 24 * 60 * 60 * 1000) pintarPago(guardado);
   else avisoPedido();
