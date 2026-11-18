@@ -907,7 +907,7 @@
       var mismaMedida = (it.w === v.w && it.h === v.h) || (it.w === v.h && it.h === v.w);
       return mismaMedida && it.p === v.p && it.lam === v.lam && it.mon === v.mon && !it.oferta;
     });
-    if (igual) { igual.q += v.q; }
+    if (igual) { igual.q = Math.min(999, igual.q + v.q); }
     else { pedido.push({ w: v.w, h: v.h, p: v.p, q: v.q, lam: v.lam, mon: v.mon }); }
     pintar();
   });
