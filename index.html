@@ -142,7 +142,12 @@
   #calc-impresion .ci-paso-num{font-size:13px;font-weight:600;color:var(--ambar);margin:0 0 4px}
   #calc-impresion .ci-paso-txt{font-size:14.5px;color:rgba(236,231,220,.8);margin:0 0 12px}
   #calc-impresion .ci-paso-txt strong{color:var(--papel)}
-  #calc-impresion .ci-llave{font-size:19px;font-weight:600;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+  #calc-impresion .ci-llave{display:flex;align-items:center;gap:12px;max-width:340px;margin:0 0 8px;padding:8px 6px 8px 14px;border:1px solid rgba(236,231,220,.35);border-radius:2px;background:#101216}
+  #calc-impresion .ci-llave-ico{flex:none;width:24px;height:24px;color:var(--ambar)}
+  #calc-impresion .ci-llave-txt{display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.25}
+  #calc-impresion .ci-llave-etq{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(236,231,220,.6)}
+  #calc-impresion .ci-llave-num{font-size:21px;font-weight:600;letter-spacing:.06em;font-variant-numeric:tabular-nums;color:var(--papel)}
+  #calc-impresion .ci-llave .ci-copiar{flex:none;width:44px;height:44px;margin:0}
   #calc-impresion a.ci-add,#calc-impresion a.ci-sec{display:block;text-align:center;text-decoration:none}
   #calc-impresion .ci-copiar{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;margin-left:6px;vertical-align:middle;cursor:pointer;background:none;border:0;border-radius:2px;color:rgba(236,231,220,.6)}
   #calc-impresion .ci-copiar:hover{color:var(--papel);background:rgba(236,231,220,.08)}
@@ -153,6 +158,16 @@
   #calc-impresion .ci-copiar.ci-ok .ci-ico-ok{display:block}
   #calc-impresion .ci-aviso{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;border:1px solid var(--ambar);padding:12px 16px;margin-bottom:24px;font-size:14.5px}
   #calc-impresion .ci-aviso[hidden]{display:none}
+  #calc-impresion .ci-volver-aqui{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--linea)}
+  #calc-impresion .ci-cancelar{margin:4px 0 0;padding:0 2px}
+  #calc-impresion .ci-cancelar[hidden],#calc-impresion .ci-cancelar-confirmar[hidden]{display:none}
+  #calc-impresion .ci-cancelar .ci-paso-txt{font-size:13.5px}
+  #calc-impresion .ci-enlace{font-family:inherit;font-size:13.5px;cursor:pointer;background:none;border:0;padding:6px 0;color:rgba(236,231,220,.75);text-decoration:underline;text-underline-offset:3px}
+  #calc-impresion .ci-enlace:hover{color:var(--papel)}
+  #calc-impresion .ci-enlace[hidden]{display:none}
+  #calc-impresion .ci-cancelar-confirmar{border:1px solid var(--linea);background:var(--tinta-2);padding:16px 18px;margin:4px 0 12px}
+  #calc-impresion .ci-cancelar-confirmar .ci-sec{margin:4px 0 6px}
+  #calc-impresion .ci-cancelar-confirmar .ci-sec[disabled]{opacity:.6;cursor:default}
   #calc-impresion .ci-aviso-btn,#calc-impresion .ci-sug button{font-family:inherit;font-size:inherit;cursor:pointer;background:none;border:0;padding:0;color:var(--ambar);text-decoration:underline;text-underline-offset:3px}
   #calc-impresion .ci-sug{font-size:13.5px;color:var(--papel);margin:6px 0 4px}
   #calc-impresion .ci-correo-ver{font-size:17px;font-weight:600;color:var(--papel);margin:0 0 6px;overflow-wrap:anywhere}
@@ -172,8 +187,11 @@
 </style>
 
 <div class="ci-aviso" id="ci-aviso" hidden>
-  <span>Tu pedido <strong id="ci-aviso-num"></strong> está registrado.</span>
-  <button type="button" class="ci-aviso-btn" id="ci-aviso-ver">Ver cómo pagar y enviar el comprobante</button>
+  <span>Tienes un pedido registrado por <strong id="ci-aviso-total"></strong>.</span>
+  <button type="button" class="ci-aviso-btn" id="ci-aviso-ver">Ver cómo pagar y enviar la captura</button>
+</div>
+<div class="ci-aviso" id="ci-cancelado" role="status" hidden>
+  <span>Cancelamos tu pedido. Tu cotización sigue aquí: cámbiala si hace falta y toca «Hacer mi pedido». El código de descuento se pone en el paso siguiente.</span>
 </div>
 
 <div class="ci-head">
@@ -313,7 +331,7 @@
 <div class="ci-paso" id="ci-pago-vista" hidden>
   <button class="ci-volver" id="ci-otra" type="button">← Hacer otra cotización</button>
   <p class="ci-paso-num">Pedido registrado</p>
-  <h2 class="ci-title">Tu número de pedido es <span id="ci-pago-num"></span></h2>
+  <h2 class="ci-title">Solo falta el pago</h2>
   <div class="ci-bloque">
     <div class="ci-res-total" style="padding-top:0"><span>Total a pagar</span><span><strong id="ci-pago-total"></strong><button type="button" class="ci-copiar" id="ci-copiar-valor" aria-label="Copiar valor" title="Copiar valor"><svg class="ci-ico-copiar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg><svg class="ci-ico-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></span></div>
   </div>
@@ -321,13 +339,12 @@
   <div class="ci-bloque">
     <p class="ci-paso-num">1 · Paga</p>
     <div id="ci-pago-medios"></div>
-    <p class="ci-paso-txt">Si pagas por transferencia, escribe en el mensaje tu número de pedido: <strong id="ci-pago-ref"></strong><button type="button" class="ci-copiar" id="ci-copiar-ref" aria-label="Copiar número de pedido" title="Copiar número de pedido"><svg class="ci-ico-copiar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg><svg class="ci-ico-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></p>
   </div>
 
   <div class="ci-bloque">
-    <p class="ci-paso-num">2 · Envíanos el comprobante</p>
-    <p class="ci-paso-txt">Mándanos la captura del pago por WhatsApp.</p>
-    <a class="ci-sec" id="ci-pago-wa" href="#" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
+    <p class="ci-paso-num">2 · Envíanos la captura del pago</p>
+    <p class="ci-paso-txt">Mándala por WhatsApp desde el número que nos diste<span id="ci-pago-tel-caja">, <strong id="ci-pago-tel"></strong></span>: con ese número encontramos tu pedido.</p>
+    <a class="ci-sec" id="ci-pago-wa" href="#" target="_blank" rel="noopener">Enviar la captura por WhatsApp</a>
   </div>
 
   <div class="ci-bloque">
@@ -335,6 +352,17 @@
     <p class="ci-paso-txt">Cuando confirmemos tu pago, te llega un correo para que nos envíes tus fotos. El tiempo de entrega cuenta desde que tenemos el pago y las fotos.</p>
     <p class="ci-correo-ver" id="ci-pago-correo"></p>
     <p class="ci-paso-txt" style="margin:0;font-size:13px">¿Está mal escrito? Corrígelo en el mensaje de WhatsApp antes de enviarlo.</p>
+  </div>
+
+  <div class="ci-cancelar" id="ci-cancelar-caja" hidden>
+    <p class="ci-paso-txt">¿Te faltó tu código de descuento o quieres cambiar algo? Cancela este pedido y haz uno nuevo: tu cotización vuelve a la calculadora.</p>
+    <button type="button" class="ci-enlace" id="ci-cancelar" aria-expanded="false" aria-controls="ci-cancelar-confirmar">Cancelar este pedido</button>
+    <div class="ci-cancelar-confirmar" id="ci-cancelar-confirmar" hidden>
+      <p class="ci-paso-txt"><strong>¿Cancelamos tu pedido por <span id="ci-cancelar-total"></span>?</strong> Si ya pagaste, no lo canceles: envíanos la captura del pago.</p>
+      <button type="button" class="ci-sec" id="ci-cancelar-si">Sí, cancelar el pedido</button>
+      <button type="button" class="ci-enlace" id="ci-cancelar-no">No, mantener mi pedido</button>
+    </div>
+    <p class="ci-error" id="ci-cancelar-error" role="alert"></p>
   </div>
 </div>
 
@@ -546,6 +574,7 @@
   function mostrar(v) {
     Object.keys(vistas).forEach(function (k) { vistas[k].forEach(function (el) { el.hidden = k !== v; }); });
     if (v === "calc") avisoPedido();
+    $("ci-cancelado").hidden = true;
     var raiz = $("calc-impresion"); if (raiz.scrollIntoView) raiz.scrollIntoView({ block: "start" });
   }
   function textoItem(it, r) {
@@ -659,7 +688,7 @@
   function avisoPedido() {
     var g = ultimoPedido();
     $("ci-aviso").hidden = !g;
-    if (g) $("ci-aviso-num").textContent = g.pedido;
+    if (g) $("ci-aviso-total").textContent = g.totalTexto;
   }
 
   var DOMINIOS = ["gmail.com", "hotmail.com", "hotmail.es", "outlook.com", "outlook.es", "yahoo.com", "yahoo.es",
@@ -721,6 +750,10 @@
     n = n.replace(/^0+/, "");
     return n.length >= 6 && cc.length + n.length <= 15 ? "+" + cc + n : "";
   }
+  function telVisible(n) {
+    n = String(n || "");
+    return /^\+57\d{10}$/.test(n) ? "+57\u00a0" + n.slice(3, 6) + "\u00a0" + n.slice(6, 9) + "\u00a0" + n.slice(9) : n;
+  }
   $("ci-indicativo").addEventListener("change", function () {
     $("ci-whatsapp").placeholder = this.value === "+57" ? "300 123 4567" : (this.value ? "Número sin el indicativo" : "+44 7700 900123");
   });
@@ -761,7 +794,10 @@
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (!j || !j.ok) { var e = new Error((j && j.error) || ""); e.servidor = true; throw e; }
-        var g = { pedido: j.pedido, total: j.total, totalTexto: j.totalTexto || cop(j.total), correo: d.correo, fecha: Date.now() };
+        var g = { pedido: j.pedido, total: j.total, totalTexto: j.totalTexto || cop(j.total), correo: d.correo, nombre: d.nombre,
+                  whatsapp: normalizarWhatsapp(d.indicativo, d.whatsapp), fecha: Date.now(),
+                  clave: j.clave || "", items: d.items,
+                  form: { indicativo: d.indicativo, whatsapp: d.whatsapp, ciudad: d.ciudad, entrega: d.entrega } };
         guardarPedido(g);
         pedido = []; pintar();
         quitarCupon();
@@ -775,25 +811,77 @@
 
   function pintarPago(g) {
     var total = g.totalTexto;
-    $("ci-pago-num").textContent = g.pedido;
-    $("ci-pago-ref").textContent = g.pedido;
+    $("ci-pago-tel").textContent = telVisible(g.whatsapp);
+    $("ci-pago-tel-caja").hidden = !g.whatsapp;
     $("ci-pago-total").textContent = total;
     $("ci-pago-correo").textContent = g.correo;
     var P = CFG.pago, html = "";
     if (P.linkNequi) html += '<a class="ci-add" href="' + P.linkNequi + '" target="_blank" rel="noopener" style="margin-bottom:6px">Pagar ' + total + ' en línea</a>'
-      + '<p class="ci-paso-txt" style="font-size:12.5px">Con tarjeta débito o crédito, PSE, Nequi o Bancolombia. Escribe el valor exacto: ' + total + '.</p>'
-      + '<p class="ci-paso-txt"><strong>Cuando pagues, vuelve a esta página</strong> para enviarnos la captura del pago. '
-      + 'Si se cerró, ábrela de nuevo desde donde la abriste la primera vez: tu pedido seguirá aquí durante tres días. '
-      + 'Por si acaso, guarda tu número de pedido; con él también puedes escribirnos por WhatsApp.</p>';
-    if (P.llaveBreB) html += '<p class="ci-paso-txt">' + (P.linkNequi ? "O transfiere" : "Transfiere") + ' <strong>' + total + '</strong> desde cualquier banco o Nequi a nuestra llave Bre-B (transferencias inmediatas entre bancos y billeteras):</p><p class="ci-llave">' + P.llaveBreB + '<button type="button" class="ci-copiar" id="ci-copiar-llave" aria-label="Copiar llave" title="Copiar llave"><svg class=\"ci-ico-copiar\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"12\" height=\"12\" rx=\"1.5\"/><path d=\"M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5\"/></svg><svg class=\"ci-ico-ok\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></button></p>';
+      + '<p class="ci-paso-txt" style="font-size:12.5px">Con tarjeta débito o crédito, PSE, Nequi o Bancolombia. Escribe el valor exacto: ' + total + '.</p>';
+    if (P.llaveBreB) html += '<p class="ci-paso-txt">' + (P.linkNequi ? "O transfiere" : "Transfiere") + ' <strong>' + total + '</strong> desde cualquier banco o Nequi a esta llave Bre-B:</p>'
+      + '<div class="ci-llave"><svg class="ci-llave-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 20.5 2.5M16.8 6.2l2.6 2.6M14.6 8.4l1.8 1.8"/></svg>'
+      + '<span class="ci-llave-txt"><span class="ci-llave-etq">Llave Bre-B</span><span class="ci-llave-num">' + P.llaveBreB + '</span></span>'
+      + '<button type="button" class="ci-copiar" id="ci-copiar-llave" aria-label="Copiar llave" title="Copiar llave"><svg class=\"ci-ico-copiar\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"12\" height=\"12\" rx=\"1.5\"/><path d=\"M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5\"/></svg><svg class=\"ci-ico-ok\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></button></div>'
+      + '<p class="ci-paso-txt" style="font-size:12.5px">En la app de tu banco o de Nequi, busca Bre-B, elige enviar con llave y pégala completa, con los dos ceros del comienzo.</p>';
+    if (html) html += '<p class="ci-paso-txt ci-volver-aqui"><strong>Cuando pagues, vuelve a esta página</strong> para enviarnos la captura del pago. '
+      + 'Si la página se cerró, mándala por WhatsApp desde el número que nos diste.</p>';
     if (!html) html = '<p class="ci-paso-txt">Escríbenos por WhatsApp y te enviamos los datos para pagar <strong>' + total + '</strong>.</p>';
     $("ci-pago-medios").innerHTML = html;
     $("ci-pago-wa").href = "https://wa.me/" + CFG.whatsapp + "?text=" + encodeURIComponent(
-      "Hola, hice el pedido " + g.pedido + " por " + total + ". Mi correo es " + g.correo + ". Te envío el comprobante de pago.");
+      (g.nombre ? "Hola, soy " + g.nombre + ". Hice un pedido por " : "Hola, hice un pedido por ") + total
+      + " y te envío la captura del pago. Mi correo es " + g.correo + ".");
     copiar("ci-copiar-valor", String(g.total), "Copiar valor");
-    copiar("ci-copiar-ref", g.pedido, "Copiar número de pedido");
     if ($("ci-copiar-llave")) copiar("ci-copiar-llave", P.llaveBreB, "Copiar llave");
+    $("ci-cancelar-caja").hidden = !g.clave;
+    $("ci-cancelar-total").textContent = total;
+    abrirCancelar(false);
+    errorCancelar("");
     mostrar("pago");
+  }
+
+  function abrirCancelar(abrir) {
+    $("ci-cancelar-confirmar").hidden = !abrir;
+    $("ci-cancelar").hidden = abrir;
+    $("ci-cancelar").setAttribute("aria-expanded", String(abrir));
+  }
+  function errorCancelar(msg) { var el = $("ci-cancelar-error"); el.textContent = msg; el.classList.toggle("ci-on", !!msg); }
+  $("ci-cancelar").addEventListener("click", function () { abrirCancelar(true); $("ci-cancelar-si").focus(); });
+  $("ci-cancelar-no").addEventListener("click", function () { abrirCancelar(false); $("ci-cancelar").focus(); });
+  $("ci-cancelar-si").addEventListener("click", function () {
+    var g = ultimoPedido();
+    if (!g || !g.clave) { errorCancelar("No pudimos cancelar tu pedido desde aquí. Escríbenos por WhatsApp al +57 311 704 9547."); return; }
+    var btn = this; btn.disabled = true; btn.textContent = "Cancelando tu pedido…"; errorCancelar("");
+    fetch(CFG.urlPedidos, { method: "POST", body: JSON.stringify({ accion: "cancelar", pedido: g.pedido, clave: g.clave }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) { errorCancelar((j && j.error) || "No pudimos cancelar tu pedido. Escríbenos por WhatsApp al +57 311 704 9547."); return; }
+        try { localStorage.removeItem(CLAVE_PEDIDO); } catch (e) {}
+        recuperarCotizacion(g);
+        mostrar("calc");
+        $("ci-cancelado").hidden = false;
+      })
+      .catch(function () { errorCancelar("No pudimos cancelar tu pedido. Revisa tu conexión e intenta de nuevo."); })
+      .then(function () { btn.disabled = false; btn.textContent = "Sí, cancelar el pedido"; });
+  });
+  function recuperarCotizacion(g) {
+    if (Array.isArray(g.items)) {
+      g.items.forEach(function (it) {
+        if (!CFG.papeles[it.p] || CFG.papeles[it.p].disponible === false) return;
+        var ya = pedido.some(function (x) { return x.w === it.w && x.h === it.h && x.p === it.p && !!x.lam === !!it.lam && !!x.mon === !!it.mon; });
+        if (!ya) pedido.push({ w: it.w, h: it.h, p: it.p, q: it.q, lam: !!it.lam, oferta: !!it.oferta, mon: !!it.mon });
+      });
+      pintar();
+    }
+    var f = g.form || {};
+    var llenar = function (id, v) { if (v && !$(id).value) $(id).value = v; };
+    llenar("ci-nombre", g.nombre); llenar("ci-correo", g.correo); llenar("ci-ciudad", f.ciudad);
+    if (f.whatsapp && !$("ci-whatsapp").value) {
+      $("ci-whatsapp").value = f.whatsapp;
+      if (f.indicativo !== undefined) { $("ci-indicativo").value = f.indicativo; $("ci-indicativo").dispatchEvent(new Event("change")); }
+    }
+    if (f.entrega && !entregaElegida()) Array.prototype.forEach.call(radiosEntrega, function (r) {
+      if (r.value === f.entrega) { r.checked = true; r.dispatchEvent(new Event("change")); }
+    });
   }
   function copiar(id, texto, etiqueta) {
     var b = $(id);
