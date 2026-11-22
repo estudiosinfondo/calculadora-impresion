@@ -220,6 +220,7 @@
         <select id="ci-p">
           <option value="bond" selected>Mate estucado · 170 g</option>
           <option value="fuji">Fujifilm Lustre · 190 g</option>
+          <option value="opalina">Opalina para afiches · 180 g</option>
         </select>
       </div>
       <div class="ci-field">
@@ -387,7 +388,8 @@
   var CFG = {
     papeles: {
       bond: { nombre: "Mate estucado · 170 g", ref50x70: 30000, manejo: 5000, disponible: false },
-      fuji: { nombre: "Fujifilm Lustre · 190 g", ref50x70: 43000, manejo: 6000 }
+      fuji: { nombre: "Fujifilm Lustre · 190 g", ref50x70: 43000, manejo: 6000 },
+      opalina: { nombre: "Opalina para afiches · 180 g", ref50x70: 27000, manejo: 5000, disponible: false }
     },
     copiaExtra: 3500,
     laminado: { manejo: 1993, pieza: 4412,  r: 1.8843 },
@@ -537,6 +539,10 @@
     var u = CFG.entrega.urlPendientes;
     if (!u || !window.fetch) return;
     fetch(u).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.papeles && typeof j.papeles === "object") {
+        Object.keys(CFG.papeles).forEach(function (k) { if (typeof j.papeles[k] === "boolean") CFG.papeles[k].disponible = j.papeles[k]; });
+        aplicarPapeles(); refrescar();
+      }
       if (!j || typeof j.montaje !== "number" || typeof j.otras !== "number") return;
       var E = CFG.entrega;
       E.montaje = j.montaje; E.otras = j.otras;
@@ -1000,17 +1006,19 @@
     pintar();
   });
 
-  Array.prototype.forEach.call(elP.options, function (o) {
-    var c = CFG.papeles[o.value];
-    if (c && c.disponible === false) {
-      o.disabled = true;
-      o.textContent = c.nombre + " · No disponible por ahora";
-      if (elP.value === o.value) {
-        var libre = Array.prototype.find.call(elP.options, function (x) { return !x.disabled; });
-        if (libre) elP.value = libre.value;
-      }
+  function aplicarPapeles() {
+    Array.prototype.forEach.call(elP.options, function (o) {
+      var c = CFG.papeles[o.value];
+      if (!c) return;
+      o.disabled = c.disponible === false;
+      o.textContent = c.nombre + (o.disabled ? " · No disponible por ahora" : "");
+    });
+    if (elP.selectedIndex < 0 || elP.options[elP.selectedIndex].disabled) {
+      var libre = Array.prototype.find.call(elP.options, function (x) { return !x.disabled; });
+      if (libre) elP.value = libre.value;
     }
-  });
+  }
+  aplicarPapeles();
 
   refrescar(); pintar(); cargarPendientes();
   setInterval(pintarEntrega, 60000);
