@@ -403,6 +403,8 @@
     entrega: {
       normal:   { recoger: 2, envioMin: 5, envioMax: 6 },
       cargado:  { recoger: 3, envioMin: 6, envioMax: 7 },
+      // Si ninguna pieza lleva montaje (copias, con o sin laminado), un día menos (desde el 23 nov 2026).
+      sinMontaje: { normal: { recoger: 1, envioMin: 4, envioMax: 5 }, cargado: { recoger: 2, envioMin: 5, envioMax: 6 } },
       horaCorte: 14, topeMontaje: 5, topeOtras: 10,
       montaje: 0, otras: 0,
       urlPendientes: "https://script.google.com/macros/s/AKfycbx3UsrbDkOvEDd7EIU0XXtDhIpjV_x9c3u57HGUN-Pyv51WUPi1KkX2Vd2ExyNy4krD/exec"
@@ -513,12 +515,14 @@
   function horaTexto(h) { return (h % 12 || 12) + ":00\u00a0" + (h < 12 ? "a.\u00a0m." : "p.\u00a0m."); }
 
   function pintarEntrega() {
-    var E = CFG.entrega, mon = E.montaje, otras = E.otras;
+    var E = CFG.entrega, mon = E.montaje, otras = E.otras, conMontaje = false;
     pedido.forEach(function (it) {
       var r = cotizar(it.w, it.h, it.p, it.q, it.lam, it.mon, it.oferta);
-      if (r.mon) mon += it.q; else otras += it.q;
+      if (r.mon) { mon += it.q; conMontaje = true; } else otras += it.q;
     });
-    var t = mon >= E.topeMontaje || otras >= E.topeOtras ? E.cargado : E.normal;
+    // Con montaje en alguna pieza, el plazo largo; si no (o si todavía no hay nada en la cotización), el corto.
+    var P = conMontaje ? E : E.sinMontaje;
+    var t = mon >= E.topeMontaje || otras >= E.topeOtras ? P.cargado : P.normal;
     var ahora = ahoraColombia(), hoy = ahora.dia;
     function siguiente(d) { do { d = masDias(d, 1); } while (!esHabil(d)); return d; }
     function fechas(base) {
@@ -534,7 +538,17 @@
     } else {
       html += '<p>Si nos envías tus fotos hoy:</p>' + fechas(siguiente(hoy));
     }
+    html += '<p class="ci-entrega-nota">Con montaje sobre madera, la entrega toma un día hábil más.</p>';
     elEntrega.innerHTML = html;
+  }
+
+  // Los plazos los manda el script (PLAZOS en Codigo.gs); si no llegan completos, quedan los de CFG.entrega.
+  function plazoValido(t) { return !!t && ["recoger", "envioMin", "envioMax"].every(function (k) { return typeof t[k] === "number"; }); }
+  function tomarPlazos(p) {
+    if (!p || typeof p !== "object") return;
+    var E = CFG.entrega;
+    if (plazoValido(p.normal) && plazoValido(p.cargado)) { E.normal = p.normal; E.cargado = p.cargado; }
+    if (p.sinMontaje && plazoValido(p.sinMontaje.normal) && plazoValido(p.sinMontaje.cargado)) E.sinMontaje = { normal: p.sinMontaje.normal, cargado: p.sinMontaje.cargado };
   }
 
   function cargarPendientes() {
@@ -548,6 +562,7 @@
       var E = CFG.entrega;
       E.montaje = j.montaje; E.otras = j.otras;
       ["topeMontaje", "topeOtras", "horaCorte"].forEach(function (k) { if (typeof j[k] === "number") E[k] = j[k]; });
+      tomarPlazos(j.plazos);
       pintarEntrega();
     }).catch(function () {});
   }
