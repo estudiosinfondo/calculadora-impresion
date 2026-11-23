@@ -403,7 +403,8 @@
     entrega: {
       normal:   { recoger: 2, envioMin: 5, envioMax: 6 },
       cargado:  { recoger: 3, envioMin: 6, envioMax: 7 },
-      // Si ninguna pieza lleva montaje (copias, con o sin laminado), un día menos (desde el 23 nov 2026).
+      // Si ninguna pieza lleva montaje (copias, con o sin laminado), un día menos (desde el 23 nov 2026). Los retablos en
+      // cola no lo atrasan: se suma el día cuando las impresiones por hacer (con montaje o sin él) llegan a topeOtras.
       sinMontaje: { normal: { recoger: 1, envioMin: 4, envioMax: 5 }, cargado: { recoger: 2, envioMin: 5, envioMax: 6 } },
       horaCorte: 14, topeMontaje: 5, topeOtras: 10,
       montaje: 0, otras: 0,
@@ -520,9 +521,11 @@
       var r = cotizar(it.w, it.h, it.p, it.q, it.lam, it.mon, it.oferta);
       if (r.mon) { mon += it.q; conMontaje = true; } else otras += it.q;
     });
-    // Con montaje en alguna pieza, el plazo largo; si no (o si todavía no hay nada en la cotización), el corto.
-    var P = conMontaje ? E : E.sinMontaje;
-    var t = mon >= E.topeMontaje || otras >= E.topeOtras ? P.cargado : P.normal;
+    // Con montaje en alguna pieza, el plazo largo; si no (o si todavía no hay nada en la cotización), el corto,
+    // que solo se atrasa cuando las impresiones por hacer, con montaje o sin él, llegan a topeOtras.
+    var t = conMontaje
+      ? (mon >= E.topeMontaje || otras >= E.topeOtras ? E.cargado : E.normal)
+      : (mon + otras >= E.topeOtras ? E.sinMontaje.cargado : E.sinMontaje.normal);
     var ahora = ahoraColombia(), hoy = ahora.dia;
     function siguiente(d) { do { d = masDias(d, 1); } while (!esHabil(d)); return d; }
     function fechas(base) {
